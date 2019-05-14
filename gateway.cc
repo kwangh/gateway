@@ -5,12 +5,8 @@
  *      Author: kwanghun_choi@tmax.co.kr
  */
 
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <boost/bind.hpp>
-#include <boost/asio.hpp>
-#include "chat_message.h"
+
+#include "gateway.h"
 
 typedef std::queue<chat_message> chat_message_queue;
 
