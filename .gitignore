@@ -1,0 +1,11 @@
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+Makefile.in
+
+.cproject
+.project
+.settings
+
+*.swp
