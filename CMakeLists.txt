@@ -10,6 +10,7 @@ set (CMAKE_CXX_STANDARD 11)
 
 add_executable(${TARGET}
   gateway.cc
+  cds_http.cc
   )
 
 target_link_libraries(${TARGET}

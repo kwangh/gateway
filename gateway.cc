@@ -5,8 +5,14 @@
  *      Author: kwanghun_choi@tmax.co.kr
  */
 
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <boost/bind.hpp>
+#include <boost/asio.hpp>
 
-#include "gateway.h"
+#include "chat_message.h"
+#include "cds_http.h"
 
 typedef std::queue<chat_message> chat_message_queue;
 
@@ -46,19 +52,23 @@ private:
 class tcp_server
 {
 public:
-  tcp_server(boost::asio::io_context& io_context,
+  tcp_server(boost::asio::io_context* io_context,
       const boost::asio::ip::tcp::endpoint& tx_endpoint,
       const boost::asio::ip::tcp::endpoint& rx_endpoint)
-      : io_context_(io_context),
-        tx_acceptor_(io_context, tx_endpoint),
-        rx_acceptor_(io_context, rx_endpoint)
+      : io_context_(*io_context),
+        tx_acceptor_(*io_context, tx_endpoint),
+        rx_acceptor_(*io_context, rx_endpoint)
   {
+    cds_http_ = new CDSHttp(io_context);
+
     start_tx_accept();
     start_rx_accept();
   }
 
   ~tcp_server()
   {
+    if(cds_http_)
+      delete cds_http_;
     clear_vector();
   }
 
@@ -285,13 +295,15 @@ private:
   chat_message rx_read_msg_;
   chat_message_queue tx_write_msgs_;
   chat_message_queue rx_write_msgs_;
+
+  CDSHttp* cds_http_;
 };
 
 int main()
 {
   try
   {
-    boost::asio::io_context io_context;
+    boost::asio::io_context* io_context = new boost::asio::io_context;
 
     const uint16_t tx_port = 1233;
     const uint16_t rx_port = 1234;
@@ -300,7 +312,9 @@ int main()
     boost::asio::ip::tcp::endpoint rx_endpoint(boost::asio::ip::tcp::v4(), rx_port);
     tcp_server server(io_context, tx_endpoint, rx_endpoint);
 
-    io_context.run();
+    io_context->run();
+
+    if(io_context) delete io_context;
   }
   catch (std::exception& e)
   {
