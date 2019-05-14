@@ -1,5 +1,5 @@
 /*
- * server.cc
+ * gateway.cc
  *
  *  Created on: 2019. 4. 3.
  *      Author: kwanghun_choi@tmax.co.kr
@@ -85,13 +85,13 @@ private:
   {
     if (error)
     {
-      std::cerr << "handle_tx_accept error : " << error.message() << std::endl;
+      std::cerr << "handle_tx_accept error : " << error.message() << "\n";
       socket->close();
       delete socket;
     }
     else if (tx_sockets_.size() >= 1)
     {
-      std::cout << "tx socket number is bigger than 1" << std::endl;
+      std::cout << "tx socket number is bigger than 1" << "\n";
       socket->close();
       delete socket;
     }
@@ -99,7 +99,7 @@ private:
     {
       socket_info si = socket_info(socket, tx_sockets_.size()); // temporary
       tx_sockets_.push_back(si);
-      std::cout << "tx socket vector size : " << tx_sockets_.size() << std::endl;
+      std::cout << "tx socket vector size : " << tx_sockets_.size() << "\n";
 
       boost::asio::async_read(*socket, boost::asio::buffer(tx_read_msg_.data(), chat_message::header_length),
           boost::bind(&tcp_server::handle_tx_read_header, this, socket, boost::asio::placeholders::error));
@@ -112,13 +112,13 @@ private:
   {
     if (error)
     {
-      std::cerr << "handle_rx_accept error : " << error.message() << std::endl;
+      std::cerr << "handle_rx_accept error : " << error.message() << "\n";
       socket->close();
       delete socket;
     }
     else if (rx_sockets_.size() >= 1)
     {
-      std::cout << "rx socket number is bigger than 1" << std::endl;
+      std::cout << "rx socket number is bigger than 1" << "\n";
       socket->close();
       delete socket;
     }
@@ -126,7 +126,7 @@ private:
     {
       socket_info si = socket_info(socket, rx_sockets_.size()); // temporary
       rx_sockets_.push_back(si);
-      std::cout << "rx socket vector size : " << rx_sockets_.size() << std::endl;
+      std::cout << "rx socket vector size : " << rx_sockets_.size() << "\n";
 
       boost::asio::async_read(*socket, boost::asio::buffer(rx_read_msg_.data(), chat_message::header_length),
           boost::bind(&tcp_server::handle_rx_read_header, this, socket, boost::asio::placeholders::error));
@@ -144,7 +144,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_tx_read_header error : " << error.message() << std::endl;
+      std::cerr << "handle_tx_read_header error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -158,7 +158,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_rx_read_header error : " << error.message() << std::endl;
+      std::cerr << "handle_rx_read_header error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -173,7 +173,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_tx_read_body error : " << error.message() << std::endl;
+      std::cerr << "handle_tx_read_body error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -188,7 +188,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_rx_read_body error : " << error.message() << std::endl;
+      std::cerr << "handle_rx_read_body error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -233,7 +233,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_tx_write error : " << error.message() << std::endl;
+      std::cerr << "handle_tx_write error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -252,7 +252,7 @@ private:
     }
     else
     {
-      std::cerr << "handle_rx_write error : " << error.message() << std::endl;
+      std::cerr << "handle_rx_write error : " << error.message() << "\n";
       clear_vector();
     }
   }
@@ -260,24 +260,24 @@ private:
   void clear_vector()
   {
     // tx
-    std::cout << "clearing tx socket vector : " << tx_sockets_.size() << std::endl;
+    std::cout << "clearing tx socket vector : " << tx_sockets_.size() << "\n";
     for (std::vector<socket_info>::iterator it = tx_sockets_.begin(); it != tx_sockets_.end(); ++it)
     {
       (*it).socket()->close();
       delete (*it).socket();
     }
     tx_sockets_.clear();
-    std::cout << "tx socket vector cleared : " << tx_sockets_.size() << std::endl;
+    std::cout << "tx socket vector cleared : " << tx_sockets_.size() << "\n";
 
     // rx
-    std::cout << "clearing rx socket vector : " << rx_sockets_.size() << std::endl;
+    std::cout << "clearing rx socket vector : " << rx_sockets_.size() << "\n";
     for (std::vector<socket_info>::iterator it = rx_sockets_.begin(); it != rx_sockets_.end(); ++it)
     {
       (*it).socket()->close();
       delete (*it).socket();
     }
     rx_sockets_.clear();
-    std::cout << "rx socket vector cleared : " << rx_sockets_.size() << std::endl;
+    std::cout << "rx socket vector cleared : " << rx_sockets_.size() << "\n";
   }
 
   boost::asio::io_context& io_context_;
