@@ -25,6 +25,7 @@ public:
   static CDSHttp* instance();
 
 private:
+  void sendSessionInit();
 
 private:
   static CDSHttp* instance_;
