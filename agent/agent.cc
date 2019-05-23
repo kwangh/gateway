@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <array>
+#include <fstream>
+#include <limits>
 #include <sys/inotify.h>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -65,6 +67,26 @@ public:
             boost::asio::placeholders::bytes_transferred));
   }
 
+  std::istream& ignore_line(std::ifstream& in, std::ifstream::pos_type& pos)
+  {
+    pos = in.tellg();
+    return in.ignore(std::numeric_limits < std::streamsize > ::max(), '\n');
+  }
+
+  std::string get_last_line(std::ifstream& in)
+  {
+    std::ifstream::pos_type pos, last_pos;
+
+    while (in >> std::ws && ignore_line(in, pos))
+      last_pos = pos;
+
+    in.clear();
+    in.seekg(last_pos);
+    std::string line;
+    std::getline(in, line);
+    return line;
+  }
+
   void read_handler(const boost::system::error_code& ec, std::size_t bt)
   {
     if (!ec)
@@ -76,18 +98,35 @@ public:
 
         if (strstr(ie->name, "vds.log"))
         {
-          if (ie->mask == IN_CREATE)
-          {
-            LOG2(ie->name, " is created");
-          }
-          else if (ie->mask == IN_MODIFY)
+          if (ie->mask == IN_MODIFY)
           {
             LOG2(ie->name, " is modified");
-            system("cat /tmp/vds.log");
-          }
-          else if (ie->mask == IN_OPEN)
-          {
-            LOG2(ie->name, " is opened");
+
+            std::ifstream file("/tmp/vds.log");
+
+            if (file)
+            {
+              std::string line = get_last_line(file);
+              LOG(line);
+              size_t pos;
+
+              if (line.find("Tx_startup_status : Success") != std::string::npos)
+              {
+                LOG("TX start!");
+              }
+              if (line.find("Rx_connection_status : Done") != std::string::npos)
+              {
+                LOG("RX connect!");
+              }
+
+            }
+            else
+            {
+              std::cout << "file open fail\n";
+              assert(0);
+            }
+
+            file.close();
           }
         }
 
@@ -122,7 +161,7 @@ int main()
   }
   catch (std::exception& e)
   {
-    std::cerr << "Exception: " << e.what() << "\n";
+    LOG_ERR2("Exception: ", e.what());
   }
 
   return 0;

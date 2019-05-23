@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 
-set(TARGET out)
+set(TARGET control_agent)
 project(${TARGET} LANGUAGES CXX DESCRIPTION "agent")
 message(STATUS "${BoldBlue}${PROJECT_NAME} : ${PROJECT_DESCRIPTION}${ColorReset}")
 
