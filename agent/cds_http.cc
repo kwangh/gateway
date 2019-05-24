@@ -149,7 +149,7 @@ void CDSHttp::post_monitor_status()
 
 void CDSHttp::update_monitor_status()
 {
-  http_client_.request("POST", "/cds/master/monitorStatus?action=Update", getStringJson(),
+  /*http_client_.request("POST", "/cds/master/monitorStatus?action=Update", getStringJson(),
       [this](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code& e)
       {
         if (!e)
@@ -161,18 +161,16 @@ void CDSHttp::update_monitor_status()
 
           if (!recv_doc["dto"]["err_no"].GetInt())
           {
-            TLOG(LOG_INFO, CDS_AGENT, admin)
-            << rapidjson::Pointer("/dto/message").Get(recvDoc)->GetString();
+            LOG(recv_doc["dto"]["message"].GetString());
           }
           else
           {
-            TLOG(LOG_ERROR, CDS_AGENT, admin)
-            << "error : " << rapidjson::Pointer("/dto/message").Get(recvDoc)->GetString();
+            LOG_ERR(recv_doc["dto"]["message"].GetString());
           }
         }
         else
         {
           LOG_ERR("UPDATE /cds/master/monitorStatus error: " + e.message());
         }
-      });
+      });*/
 }
