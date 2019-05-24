@@ -37,19 +37,19 @@ CDSHttp::CDSHttp(boost::asio::io_context* io_context)
     LOG("[Tx->GW] Session Start request: " + request_json);
     response->write("{\"err_no\" : 0}");
 
-    rapidjson::Document io_context;
-    io_context.Parse(request_json.c_str());
+    rapidjson::Document recv_doc;
+    recv_doc.Parse(request_json.c_str());
 
     int user_idx=-1, desktop_idx=-1;
 
-    if(io_context.HasMember("user_idx") && io_context["user_idx"].IsInt())
+    if(recv_doc.HasMember("user_idx") && recv_doc["user_idx"].IsInt())
     {
-      user_idx = io_context["user_idx"].GetInt();
+      user_idx = recv_doc["user_idx"].GetInt();
     }
 
-    if(io_context.HasMember("desktop_idx") && io_context["desktop_idx"].IsInt())
+    if(recv_doc.HasMember("desktop_idx") && recv_doc["desktop_idx"].IsInt())
     {
-      desktop_idx = io_context["desktop_idx"].GetInt();
+      desktop_idx = recv_doc["desktop_idx"].GetInt();
     }
 
     rapidjson::Document dto_doc;
@@ -68,9 +68,6 @@ CDSHttp::CDSHttp(boost::asio::io_context* io_context)
     LOG(sb.GetString());
 
   };
-
-
-
 
   http_server_.resource["/test"]["POST"] = [this](
       std::shared_ptr<HttpServer::Response> response,
@@ -92,17 +89,6 @@ CDSHttp::CDSHttp(boost::asio::io_context* io_context)
 
     response->write("{\"err_no\" : 0}");
   };
-
-  /*http_server_.resource["^/sessionClose"]["POST"] = [this](
-   std::shared_ptr<HttpServer::Response> response,
-   std::shared_ptr<HttpServer::Request> request)
-   {
-
-   TLOG(LOG_INFO, CDS_AGENT, admin) << "TX <-> Master Session Close";
-   session_status_ = 0;
-   sendSessionStatusToMaster();
-   sendCloseSessionToMaster();
-   };*/
 
   http_server_.start();
 }

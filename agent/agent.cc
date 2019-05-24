@@ -13,6 +13,10 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#include "rapidjson/document.h"
+#include "rapidjson/istreamwrapper.h"
+
+#include "cds_http.h"
 #include "common.h"
 
 class agent
@@ -23,8 +27,9 @@ public:
     max_body_length = 4096
   };
 
-  agent(boost::asio::io_service* io_service, const char* pathname)
-      : io_service_(*io_service)
+  agent(boost::asio::io_service* io_service, const char* pathname, std::string master_ip)
+      : io_service_(*io_service),
+        cds_http_(new CDSHttp(io_service, master_ip))
   {
     init(pathname);
   }
@@ -38,6 +43,9 @@ public:
     {
       delete sd_;
     }
+
+    if (cds_http_)
+      delete cds_http_;
   }
 
   void init(const char* pathname)
@@ -122,7 +130,8 @@ public:
             }
             else
             {
-              std::cout << "file open fail\n";
+              LOG_ERR("file open fail");
+              file.close();
               assert(0);
             }
 
@@ -145,6 +154,8 @@ private:
   int fd_, wd_;
   std::array<char, max_body_length> buffer_;
   std::string buffer_str_;
+
+  CDSHttp* cds_http_;
 };
 
 int main()
@@ -152,7 +163,21 @@ int main()
   try
   {
     boost::asio::io_service* io_service = new boost::asio::io_service;
-    agent agent(io_service, "/tmp");
+    const char* vds_log_path = "/tmp";
+
+    std::ifstream ifs("/etc/vds/config.json");
+    rapidjson::IStreamWrapper isw(ifs);
+    rapidjson::Document d;
+    d.ParseStream(isw);
+
+    assert(d.IsObject());
+    assert(d.HasMember("agent"));
+    assert(d["agent"].HasMember("master_ip"));
+
+    std::string master_ip = d["agent"]["master_ip"].GetString();
+    LOG2("master ip: ", master_ip);
+
+    agent agent(io_service, vds_log_path, master_ip);
 
     io_service->run();
 
