@@ -16,8 +16,8 @@
 
 CDSHttp* CDSHttp::instance_ = nullptr;
 
-CDSHttp::CDSHttp(boost::asio::io_context* io_context, std::string master_ip)
-    : http_client_(master_ip)
+CDSHttp::CDSHttp(boost::asio::io_context* io_context, std::string master_ip_port)
+    : http_client_(master_ip_port)
 {
   LOG("CDSHttp init");
   if (instance_)
@@ -62,7 +62,7 @@ void CDSHttp::post_init()
   dto_doc.SetObject();
   rapidjson::Value container_name;
   container_name.SetString(uuid.c_str(), strlen(uuid.c_str()), dto_doc.GetAllocator());
-  dto_doc.AddMember("container_name", container_name, dto_doc.GetAllocator());
+  dto_doc.AddMember("container_id", container_name, dto_doc.GetAllocator());
 
   rapidjson::Document send_doc;
   send_doc.SetObject();
@@ -71,7 +71,7 @@ void CDSHttp::post_init()
   rapidjson::StringBuffer sb;
   rapidjson::Writer<rapidjson::StringBuffer> w(sb);
   send_doc.Accept(w);
-  LOG(sb.GetString());
+  //LOG(sb.GetString());
 
   http_client_.request("POST", "/cds/master/init", sb.GetString(),
       [this](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code& e)
@@ -91,9 +91,6 @@ void CDSHttp::post_init()
             user_idx_ =recv_doc["dto"]["user_idx"].GetInt();
             tok_ = recv_doc["dto"]["tok"].GetString();
 
-            LOG(recv_doc["dto"]["message"].GetString());
-
-            post_monitor_status();
           }
           else
           {
@@ -108,6 +105,7 @@ void CDSHttp::post_init()
       });
 }
 
+//session init
 void CDSHttp::post_monitor_status()
 {
   rapidjson::Document dto_doc;
@@ -122,7 +120,7 @@ void CDSHttp::post_monitor_status()
   rapidjson::StringBuffer sb;
   rapidjson::Writer<rapidjson::StringBuffer> w(sb);
   send_doc.Accept(w);
-  LOG(sb.GetString());
+  //LOG(sb.GetString());
 
   http_client_.request("POST", "/cds/master/monitorStatus", sb.GetString(),
       [this](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code& e)
@@ -149,7 +147,25 @@ void CDSHttp::post_monitor_status()
 
 void CDSHttp::update_monitor_status()
 {
-  /*http_client_.request("POST", "/cds/master/monitorStatus?action=Update", getStringJson(),
+  rapidjson::Document rx_session_info_doc;
+  rx_session_info_doc.SetObject();
+  rx_session_info_doc.AddMember("rx_session_idx", rx_session_idx_, rx_session_info_doc.GetAllocator());
+  rx_session_info_doc.AddMember("status", 0, rx_session_info_doc.GetAllocator());
+
+  rapidjson::Document dto_doc;
+  dto_doc.SetObject();
+  dto_doc.AddMember("rxSessionInfo", rx_session_info_doc, dto_doc.GetAllocator());
+
+  rapidjson::Document send_doc;
+  send_doc.SetObject();
+  send_doc.AddMember("dto", dto_doc, send_doc.GetAllocator());
+
+  rapidjson::StringBuffer sb;
+  rapidjson::Writer<rapidjson::StringBuffer> w(sb);
+  send_doc.Accept(w);
+  LOG(sb.GetString());
+
+  http_client_.request("POST", "/cds/master/monitorStatus?action=Update", sb.GetString(),
       [this](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code& e)
       {
         if (!e)
@@ -172,5 +188,5 @@ void CDSHttp::update_monitor_status()
         {
           LOG_ERR("UPDATE /cds/master/monitorStatus error: " + e.message());
         }
-      });*/
+      });
 }

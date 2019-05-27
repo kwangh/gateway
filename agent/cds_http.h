@@ -18,14 +18,14 @@ using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 class CDSHttp
 {
 public:
-  CDSHttp(boost::asio::io_context* io_context, std::string master_ip);
+  CDSHttp(boost::asio::io_context* io_context, std::string master_ip_port);
   ~CDSHttp();
   static CDSHttp* instance();
+  void post_monitor_status();
+  void update_monitor_status();
 
 private:
   void post_init();
-  void post_monitor_status();
-  void update_monitor_status();
 
 private:
   static CDSHttp* instance_;

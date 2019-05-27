@@ -28,8 +28,7 @@ public:
   };
 
   agent(boost::asio::io_service* io_service, const char* pathname, std::string master_ip)
-      : io_service_(*io_service),
-        cds_http_(new CDSHttp(io_service, master_ip))
+      : io_service_(*io_service), cds_http_(new CDSHttp(io_service, master_ip))
   {
     init(pathname);
   }
@@ -118,13 +117,9 @@ public:
               LOG(line);
               size_t pos;
 
-              if (line.find("Tx_startup_status : Success") != std::string::npos)
-              {
-                LOG("TX start!");
-              }
               if (line.find("Rx_connection_status : Done") != std::string::npos)
               {
-                LOG("RX connect!");
+                CDSHttp::instance()->post_monitor_status();
               }
 
             }
@@ -173,11 +168,14 @@ int main()
     assert(d.IsObject());
     assert(d.HasMember("agent"));
     assert(d["agent"].HasMember("master_ip"));
+    assert(d["agent"].HasMember("master_port"));
 
     std::string master_ip = d["agent"]["master_ip"].GetString();
+    std::string master_port = std::to_string(d["agent"]["master_port"].GetInt());
     LOG2("master ip: ", master_ip);
+    LOG2("master_port: ", master_port)
 
-    agent agent(io_service, vds_log_path, master_ip);
+    agent agent(io_service, vds_log_path, master_ip + ":" + master_port);
 
     io_service->run();
 
