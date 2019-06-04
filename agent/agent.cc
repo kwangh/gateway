@@ -28,7 +28,7 @@ public:
   };
 
   agent(boost::asio::io_service* io_service, const char* pathname, std::string master_ip)
-      : io_service_(*io_service), cds_http_(new CDSHttp(io_service, master_ip))
+      : io_service_(*io_service), cds_http_(new CDSHttp(master_ip))
   {
     init(pathname);
   }
