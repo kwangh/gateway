@@ -109,7 +109,7 @@ public:
           {
             LOG2(ie->name, " is modified");
 
-            std::ifstream file("/tmp/vds.log");
+            std::ifstream file("/zone/normal/rootfs/tmp/vds.log");
 
             if (file)
             {
@@ -158,9 +158,9 @@ int main()
   try
   {
     boost::asio::io_service* io_service = new boost::asio::io_service;
-    const char* vds_log_path = "/tmp";
+    const char* vds_log_path = "/zone/normal/rootfs/tmp";
 
-    std::ifstream ifs("/etc/vds/config.json");
+    std::ifstream ifs("/zone/normal/rootfs/etc/vds/config.json");
     rapidjson::IStreamWrapper isw(ifs);
     rapidjson::Document d;
     d.ParseStream(isw);

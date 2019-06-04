@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 
-set(TARGET control_agent)
-project(${TARGET} LANGUAGES CXX DESCRIPTION "agent")
+set(TARGET vds_ca)
+project(${TARGET} LANGUAGES CXX DESCRIPTION "vds control agent")
 message(STATUS "${BoldBlue}${PROJECT_NAME} : ${PROJECT_DESCRIPTION}${ColorReset}")
 
 find_package(Boost 1.62.0 REQUIRED COMPONENTS system)

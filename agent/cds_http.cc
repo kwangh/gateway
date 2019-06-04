@@ -14,6 +14,8 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
+#include "HTTPRequest.hpp"
+
 CDSHttp* CDSHttp::instance_ = nullptr;
 
 CDSHttp::CDSHttp(boost::asio::io_context* io_context, std::string master_ip_port)
@@ -120,21 +122,30 @@ void CDSHttp::post_monitor_status()
   rapidjson::StringBuffer sb;
   rapidjson::Writer<rapidjson::StringBuffer> w(sb);
   send_doc.Accept(w);
-  //LOG(sb.GetString());
+  LOG(sb.GetString());
 
-  http_client_.request("POST", "/cds/master/monitorStatus", sb.GetString(),
+  SimpleWeb::CaseInsensitiveMultimap header;
+  header.emplace("Content-Type", "application/json");
+
+  /*http_client_.request("POST", "/cds/master/monitorStatus", sb.GetString(), header,
       [this](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code& e)
       {
         if (!e)
         {
           std::string response_json = response->content.string();
           rapidjson::Document recv_doc;
-          recv_doc.Parse(response_json.c_str());
-          LOG("POST monitorStatus response: " + response_json);
+          rapidjson::ParseResult ok = recv_doc.Parse(response_json.c_str());
 
-          if (!recv_doc["dto"]["err_no"].GetInt())
+          if(!ok)
           {
-            rx_session_idx_ = recv_doc["dto"]["rx_session_idx"].GetInt();
+            LOG("POST monitorStatus response: " + response_json);
+          }
+          else
+          {
+            if (!recv_doc["dto"]["err_no"].GetInt())
+            {
+              rx_session_idx_ = recv_doc["dto"]["rx_session_idx"].GetInt();
+            }
           }
         }
 
@@ -142,7 +153,13 @@ void CDSHttp::post_monitor_status()
         {
           LOG_ERR("POST /cds/master/monitorStatus error: " + e.message());
         }
+      });*/
+
+    http::Request request("http://172.22.5.2:9083/cds/master/monitorStatus");
+    http::Response response = request.send("POST", sb.GetString(), {
+          "Content-Type: application/json"
       });
+    std::cout << response.body.data() << std::endl;
 }
 
 void CDSHttp::update_monitor_status()
