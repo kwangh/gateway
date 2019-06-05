@@ -28,8 +28,6 @@ CDSHttp::CDSHttp(std::string master_ip_port)
     assert(0);
   }
   instance_ = this;
-
-  post_init();
 }
 
 CDSHttp::~CDSHttp()

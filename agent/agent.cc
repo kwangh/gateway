@@ -30,7 +30,10 @@ public:
   agent(boost::asio::io_service* io_service, const char* pathname, std::string master_ip)
       : io_service_(*io_service), cds_http_(new CDSHttp(master_ip))
   {
-    init(pathname);
+    if (monitor_vdscm())
+    {
+      monitor_vdslog(pathname);
+    }
   }
 
   ~agent()
@@ -47,7 +50,28 @@ public:
       delete cds_http_;
   }
 
-  void init(const char* pathname)
+  bool monitor_vdscm()
+  {
+    try
+    {
+      while (system("pgrep vds_cm > /dev/null") != 0)
+      {
+        LOG("vds_cm is not running...");
+        sleep(1);
+      }
+
+      CDSHttp::instance()->post_init();
+      LOG("vds_cm is running!");
+      return true;
+    }
+    catch (std::exception& e)
+    {
+      LOG_ERR2("vds cm monitoring exception: ", e.what());
+    }
+    return false;
+  }
+
+  void monitor_vdslog(const char* pathname)
   {
     fd_ = inotify_init();
     if (fd_ < 0)
@@ -160,7 +184,7 @@ int main()
     boost::asio::io_service* io_service = new boost::asio::io_service;
     const char* vds_log_path = "/zone/normal/rootfs/tmp";
 
-    std::ifstream ifs("/zone/normal/rootfs/etc/vds/config.json");
+    std::ifstream ifs("/system/var/cds/config.json");
     rapidjson::IStreamWrapper isw(ifs);
     rapidjson::Document d;
     d.ParseStream(isw);

@@ -17,11 +17,10 @@ public:
   CDSHttp(std::string master_ip_port);
   ~CDSHttp();
   static CDSHttp* instance();
+
+  void post_init();
   void post_monitor_status();
   void update_monitor_status();
-
-private:
-  void post_init();
 
 private:
   static CDSHttp* instance_;
