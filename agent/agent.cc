@@ -139,11 +139,13 @@ public:
             {
               std::string line = get_last_line(file);
               LOG(line);
-              size_t pos;
 
-              if (line.find("Rx_connection_status : Done") != std::string::npos)
+              if (line.find("Rx_connection_status : Connect") != std::string::npos)
               {
                 CDSHttp::instance()->post_monitor_status();
+              }else if (line.find("Rx_connection_status : Disconnect") != std::string::npos)
+              {
+                CDSHttp::instance()->update_monitor_status();
               }
 
             }
