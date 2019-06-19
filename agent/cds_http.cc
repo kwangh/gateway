@@ -79,20 +79,12 @@ void CDSHttp::post_init()
     rapidjson::Document recv_doc;
     recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
 
-    if (recv_doc["header"]["responseCode"] == "NON-0200")
-    {
-      LOG(response.body.data());
+    LOG(response.body.data());
 
-      desktop_idx_ = recv_doc["dto"]["desktop_idx"].GetInt();
-      container_id_ = recv_doc["dto"]["container_id"].GetString();
-      user_idx_ = recv_doc["dto"]["user_idx"].GetInt();
-      tok_ = recv_doc["dto"]["tok"].GetString();
-
-    }
-    else
-    {
-      LOG_ERR(recv_doc["exception"]["message"].GetString());
-    }
+    desktop_idx_ = recv_doc["dto"]["desktop_idx"].GetInt();
+    container_id_ = recv_doc["dto"]["container_id"].GetString();
+    user_idx_ = recv_doc["dto"]["user_idx"].GetInt();
+    tok_ = recv_doc["dto"]["tok"].GetString();
   }
   else
   {
