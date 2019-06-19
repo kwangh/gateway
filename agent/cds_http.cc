@@ -71,39 +71,32 @@ void CDSHttp::post_init()
   send_doc.Accept(w);
   LOG(sb.GetString());
 
-  try
+  http::Request request("http://" + master_ip_port_ + "/cds/master/init");
+  http::Response response = request.send("POST", sb.GetString());
+
+  if (response.status == http::Response::STATUS_OK)
   {
-    http::Request request("http://" + master_ip_port_ + "/cds/master/init");
-    http::Response response = request.send("POST", sb.GetString());
-
     rapidjson::Document recv_doc;
-    rapidjson::ParseResult ok = recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
+    recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
 
-    if (!ok)
+    if (recv_doc["header"]["responseCode"] == "NON-0200")
     {
-      LOG2("POST /cds/master/init response parse error: ", response.body.data());
+      LOG(response.body.data());
+
+      desktop_idx_ = recv_doc["dto"]["desktop_idx"].GetInt();
+      container_id_ = recv_doc["dto"]["container_id"].GetString();
+      user_idx_ = recv_doc["dto"]["user_idx"].GetInt();
+      tok_ = recv_doc["dto"]["tok"].GetString();
+
     }
     else
     {
-      if (recv_doc["header"]["responseCode"] == "NON-0200")
-      {
-        LOG(response.body.data());
-
-        desktop_idx_ = recv_doc["dto"]["desktop_idx"].GetInt();
-        container_id_ = recv_doc["dto"]["container_id"].GetString();
-        user_idx_ = recv_doc["dto"]["user_idx"].GetInt();
-        tok_ = recv_doc["dto"]["tok"].GetString();
-
-      }
-      else
-      {
-        LOG_ERR(recv_doc["exception"]["message"].GetString());
-      }
+      LOG_ERR(recv_doc["exception"]["message"].GetString());
     }
   }
-  catch (const std::exception& e)
+  else
   {
-    LOG_ERR2("POST /cds/master/init error: ", e.what());
+    LOG_ERR2("POST /cds/master/init error: ", response.status);
   }
 }
 
@@ -124,29 +117,24 @@ void CDSHttp::post_monitor_status()
   send_doc.Accept(w);
   LOG(sb.GetString());
 
-  try
+  http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus");
+  http::Response response = request.send("POST", sb.GetString());
+
+  if (response.status == http::Response::STATUS_OK)
   {
-    http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus");
-    http::Response response = request.send("POST", sb.GetString());
-
     rapidjson::Document recv_doc;
-    rapidjson::ParseResult ok = recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
+    recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
 
-    if (!ok)
+    LOG2("POST monitorStatus response: ", response.body.data());
+
+    if (!recv_doc["dto"]["err_no"].GetInt())
     {
-      LOG2("POST /cds/master/monitorStatus response parse error: ", response.body.data());
-    }
-    else
-    {
-      if (!recv_doc["dto"]["err_no"].GetInt())
-      {
-        rx_session_idx_ = recv_doc["dto"]["rx_session_idx"].GetInt();
-      }
+      rx_session_idx_ = recv_doc["dto"]["rx_session_idx"].GetInt();
     }
   }
-  catch (const std::exception& e)
+  else
   {
-    LOG_ERR2("POST /cds/master/monitorStatus error: ", e.what());
+    LOG_ERR2("POST /cds/master/monitorStatus error: ", response.status);
   }
 }
 
@@ -170,34 +158,28 @@ void CDSHttp::update_monitor_status()
   send_doc.Accept(w);
   LOG(sb.GetString());
 
-  try
+  http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus?action=Update");
+  http::Response response = request.send("POST", sb.GetString());
+
+  if (response.status == http::Response::STATUS_OK)
   {
-    http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus?action=Update");
-    http::Response response = request.send("POST", sb.GetString());
-
     rapidjson::Document recv_doc;
-    rapidjson::ParseResult ok = recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
+    recv_doc.Parse(reinterpret_cast<char*>(response.body.data()));
 
-    if (!ok)
+    LOG2("UPDATE monitorStatus response: ", response.body.data());
+
+    if (!recv_doc["dto"]["err_no"].GetInt())
     {
-      LOG2("POST /cds/master/monitorStatus?action=Update response parse error: ", response.body.data());
+      LOG(recv_doc["dto"]["message"].GetString());
     }
     else
     {
-      LOG2("UPDATE monitorStatus response: ", response.body.data());
-
-      if (!recv_doc["dto"]["err_no"].GetInt())
-      {
-        LOG(recv_doc["dto"]["message"].GetString());
-      }
-      else
-      {
-        LOG_ERR(recv_doc["dto"]["message"].GetString());
-      }
+      LOG_ERR(recv_doc["dto"]["message"].GetString());
     }
+
   }
-  catch (const std::exception& e)
+  else
   {
-    LOG_ERR2("UPDATE /cds/master/monitorStatus error: ", e.what());
+    LOG_ERR2("UPDATE /cds/master/monitorStatus error: ", response.status);
   }
 }
