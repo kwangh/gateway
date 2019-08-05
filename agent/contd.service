@@ -1,0 +1,10 @@
+[Unit]
+Description=VDS control agent
+
+[Service]
+ExecStart=/system/bin/vds_ca
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+Alias=contd.service

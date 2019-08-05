@@ -30,6 +30,7 @@ public:
   agent(boost::asio::io_service* io_service, const char* pathname, std::string master_ip)
       : io_service_(*io_service), cds_http_(new CDSHttp(master_ip))
   {
+
     std::system("iptables -t nat -A PREROUTING -p tcp --dport 1233 -j DNAT --to 10.0.3.11:1233");
 
     if (monitor_vdscm())
@@ -145,7 +146,8 @@ public:
               if (line.find("Rx_connection_status : Connect") != std::string::npos)
               {
                 CDSHttp::instance()->post_monitor_status();
-              }else if (line.find("Rx_connection_status : Disconnect") != std::string::npos)
+              }
+              else if (line.find("Rx_connection_status : Disconnect") != std::string::npos)
               {
                 CDSHttp::instance()->update_monitor_status();
               }

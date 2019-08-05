@@ -72,7 +72,7 @@ void CDSHttp::post_init()
   LOG(sb.GetString());
 
   http::Request request("http://" + master_ip_port_ + "/cds/master/init");
-  http::Response response = request.send("POST", sb.GetString());
+  http::Response response = request.send("POST", sb.GetString(), { "Content-Type: application/json" });
 
   if (response.status == http::Response::STATUS_OK)
   {
@@ -110,7 +110,7 @@ void CDSHttp::post_monitor_status()
   LOG(sb.GetString());
 
   http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus");
-  http::Response response = request.send("POST", sb.GetString());
+  http::Response response = request.send("POST", sb.GetString(), { "Content-Type: application/json" });
 
   if (response.status == http::Response::STATUS_OK)
   {
@@ -122,6 +122,10 @@ void CDSHttp::post_monitor_status()
     if (!recv_doc["dto"]["err_no"].GetInt())
     {
       rx_session_idx_ = recv_doc["dto"]["rx_session_idx"].GetInt();
+    }
+    else
+    {
+      LOG2("POST monitorStatus dto error message : ", recv_doc["dto"]["message"].GetString());
     }
   }
   else
@@ -151,7 +155,7 @@ void CDSHttp::update_monitor_status()
   LOG(sb.GetString());
 
   http::Request request("http://" + master_ip_port_ + "/cds/master/monitorStatus?action=Update");
-  http::Response response = request.send("POST", sb.GetString());
+  http::Response response = request.send("POST", sb.GetString(), { "Content-Type: application/json" });
 
   if (response.status == http::Response::STATUS_OK)
   {
