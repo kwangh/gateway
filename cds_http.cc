@@ -66,28 +66,32 @@ CDSHttp::CDSHttp(boost::asio::io_context* io_context)
     send_doc.Accept(w);
     LOG("[GW->Master] Send Session Init request: ");
     LOG(sb.GetString());
-
   };
 
-  http_server_.resource["/test"]["POST"] = [this](
+  http_server_.resource["/test"]["GET"] = [this](
       std::shared_ptr<HttpServer::Response> response,
       std::shared_ptr<HttpServer::Request> request)
   {
-    rapidjson::Document dto_doc;
-    dto_doc.SetObject();
-    dto_doc.AddMember("user_idx", 1, dto_doc.GetAllocator());
-    dto_doc.AddMember("desktop_idx", 2, dto_doc.GetAllocator());
+    for(auto &field : request->header){
+	    LOG(field.first + " " + field.second);
+    }
 
-    rapidjson::Document send_doc;
-    send_doc.SetObject();
-    send_doc.AddMember("dto", dto_doc, send_doc.GetAllocator());
+    response->write("{\"dto\":{\"rx_session_idx\":1,\"message\":\"monitor Status Create Success\"}}");
 
-    rapidjson::StringBuffer sb;
-    rapidjson::Writer<rapidjson::StringBuffer> w(sb);
-    send_doc.Accept(w);
-    LOG(sb.GetString());
+//    response->write("{\"err_no\" : 0}");
+  };
+  
+  http_server_.resource["/test2"]["POST"] = [this](
+      std::shared_ptr<HttpServer::Response> response,
+      std::shared_ptr<HttpServer::Request> request)
+  {
+    for(auto &field : request->header){
+	    LOG(field.first + " " + field.second);
+    }
 
-    response->write("{\"err_no\" : 0}");
+    LOG(request->content.string());
+
+    response->write("{\"dto\":{\"rx_session_idx\":2,\"message\":\"monitor Status Update Success\"}}");
   };
 
   http_server_.start();
