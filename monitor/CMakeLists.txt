@@ -9,4 +9,7 @@ add_executable(${TARGET}
   )
 
 find_library(LXC_LIB lxc)
-target_link_libraries(${TARGET} ${LXC_LIB})
+target_link_libraries(${TARGET}
+pthread
+${LXC_LIB}
+)

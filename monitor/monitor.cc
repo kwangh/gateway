@@ -6,6 +6,8 @@
  */
 
 #include <iostream>
+#include <boost/asio.hpp>
+
 #include <sys/epoll.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -204,72 +206,97 @@ int lxc_abstract_unix_connect(const char *path)
   return fd;
 }
 
+void handler(const boost::system::error_code& error,std::size_t bytes_transferred){
+
+};
+
 int main()
 {
-  struct sockaddr_un addr;
-  int fd;
-  size_t retry;
-  int backoff_ms[] = { 10, 50, 100 };
-  addr.sun_family = AF_UNIX;
-  char *path = NULL;
+  pid_t pid;
 
-  const char *lxcpath = "/var/lib/lxc";
-
-  if (lxc_monitor_sock_name(lxcpath, &addr) < 0)
-    return -1;
-
-  printf("Opening monitor socket %s with len %zu\n", &addr.sun_path[1], strlen(&addr.sun_path[1]));
-
-  for (retry = 0; retry < sizeof(backoff_ms) / sizeof(backoff_ms[0]); retry++)
+  if (pid = fork())
   {
-    fd = lxc_abstract_unix_connect(addr.sun_path);
-    if (fd != -1 || errno != ECONNREFUSED)
-      break;
-
-    printf("Failed to connect to monitor socket. Retrying in %d ms\n", backoff_ms[retry]);
-    usleep(backoff_ms[retry] * 1000);
-  }
-
-  if (fd < 0)
-  {
-    printf("Failed to connect to monitor socket\n");
-    return -1;
-  }
-
-  struct epoll_event ev;
-  ev.events = EPOLLIN;
-  ev.data.fd = fd;
-
-  struct lxc_msg msglxc;
-
-  int ret;
-
-  for (;;)
-  {
-    ret = lxc_read_nointr(fd, &msglxc, sizeof(msglxc));
-    if (ret != sizeof(msglxc))
+    sleep(2);
+    if (pid > 0)
     {
-      std::cerr << "Reading from fifo failed\n";
-      close(fd);
+      kill(pid, SIGKILL);
+    }
+
+    struct sockaddr_un addr;
+    int fd;
+    size_t retry;
+    int backoff_ms[] = { 10, 50, 100 };
+    addr.sun_family = AF_UNIX;
+    char *path = NULL;
+
+    const char *lxcpath = "/var/lib/lxc";
+
+    if (lxc_monitor_sock_name(lxcpath, &addr) < 0)
+      return -1;
+
+    printf("Opening monitor socket %s with len %zu\n", &addr.sun_path[1], strlen(&addr.sun_path[1]));
+
+    for (retry = 0; retry < sizeof(backoff_ms) / sizeof(backoff_ms[0]); retry++)
+    {
+      fd = lxc_abstract_unix_connect(addr.sun_path);
+      if (fd != -1 || errno != ECONNREFUSED)
+        break;
+
+      printf("Failed to connect to monitor socket. Retrying in %d ms\n", backoff_ms[retry]);
+      usleep(backoff_ms[retry] * 1000);
+    }
+
+    if (fd < 0)
+    {
+      printf("Failed to connect to monitor socket\n");
       return -1;
     }
-    else
-    {
-      msglxc.name[sizeof(msglxc.name) - 1] = '\0';
 
-      switch (msglxc.type)
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = fd;
+
+    struct lxc_msg msglxc;
+    int ret;
+    for (;;)
+    {
+      ret = lxc_read_nointr(fd, &msglxc, sizeof(msglxc));
+      if (ret != sizeof(msglxc))
       {
-        case lxc_msg_state:
-          printf("'%s' changed state to [%s]\n", msglxc.name, lxc_state2str((lxc_state_t) msglxc.value));
-          break;
-        case lxc_msg_exit_code:
-          printf("'%s' exited with status [%d]\n", msglxc.name, WEXITSTATUS((lxc_state_t) msglxc.value));
-          break;
-        default:
-          std::cout << msglxc.type << std::endl;
-          break;
+        std::cerr << "Reading from fifo failed\n";
+        close(fd);
+        return -1;
+      }
+      else
+      {
+        msglxc.name[sizeof(msglxc.name) - 1] = '\0';
+
+        switch (msglxc.type)
+        {
+          case lxc_msg_state:
+            printf("'%s' changed state to [%s]\n", msglxc.name, lxc_state2str((lxc_state_t) msglxc.value));
+            break;
+          case lxc_msg_exit_code:
+            printf("'%s' exited with status [%d]\n", msglxc.name, WEXITSTATUS((lxc_state_t) msglxc.value));
+            break;
+          default:
+            std::cout << msglxc.type << std::endl;
+            break;
+        }
       }
     }
+  }
+  else
+  {
+    std::cout << "자식 프로세스에서 lxc-monitor 구동 시작\n";
+    if (execl("/usr/bin/lxc-monitor", "lxc-monitor", NULL) == -1)
+    {
+      std::cerr << "execl error\n";
+      return 1;
+    }
+
+    std::cout << "Should not be seen\n";
+    return 0;
   }
 
   return 0;
