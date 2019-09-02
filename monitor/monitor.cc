@@ -8,15 +8,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-
-#include <sys/epoll.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <unistd.h>
-#include <inttypes.h>
+#include <inttypes.h> // PRIx64
 
 inline void __auto_free__(void *p)
 {
@@ -61,39 +53,6 @@ public:
     sd_->async_read_some(boost::asio::buffer(buffer_),
             boost::bind(&monitor::read_handler, this, boost::asio::placeholders::error,
                 boost::asio::placeholders::bytes_transferred));
-
-    /*struct epoll_event ev;
-      ev.events = EPOLLIN;
-      ev.data.fd = fd;
-
-      int ret;
-      for (;;)
-      {
-        ret = lxc_read_nointr(fd, &msglxc, sizeof(msglxc));
-        if (ret != sizeof(msglxc))
-        {
-          std::cerr << "Reading from fifo failed\n";
-          close (fd);
-          return -1;
-        }
-        else
-        {
-          msglxc.name[sizeof(msglxc.name) - 1] = '\0';
-
-          switch (msglxc.type)
-          {
-            case lxc_msg_state:
-              printf("'%s' changed state to [%s]\n", msglxc.name, lxc_state2str((lxc_state_t) msglxc.value));
-              break;
-            case lxc_msg_exit_code:
-              printf("'%s' exited with status [%d]\n", msglxc.name, WEXITSTATUS((lxc_state_t) msglxc.value));
-              break;
-            default:
-              std::cout << msglxc.type << std::endl;
-              break;
-          }
-        }
-      }*/
   }
 
   ~monitor()
@@ -149,18 +108,6 @@ private:
   std::string buffer_str_;
 
 };
-
-
-
-ssize_t lxc_read_nointr(int fd, void *buf, size_t count)
-{
-  ssize_t ret;
-  again: ret = read(fd, buf, count);
-  if (ret < 0 && errno == EINTR)
-    goto again;
-
-  return ret;
-}
 
 void *must_realloc(void *orig, size_t sz)
 {
