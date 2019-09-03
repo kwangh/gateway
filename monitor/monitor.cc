@@ -46,7 +46,7 @@ public:
       max_body_length = 4096
     };
 
-  monitor(boost::asio::io_context* io_context, int fd)
+  monitor(boost::asio::io_context* io_context, const int fd)
 : io_context_(*io_context)
   {
     sd_ = new boost::asio::posix::stream_descriptor(io_context_, fd);
@@ -57,40 +57,9 @@ public:
 
   ~monitor()
   {
-  }
-
-  void read_handler(const boost::system::error_code& ec, std::size_t bt)
-  {
-    if(!ec)
+    if(sd_)
     {
-      buffer_str_.append(buffer_.data(), buffer_.data() + bt);
-      while (buffer_str_.size() >= sizeof(lxc_msg))
-      {
-        const lxc_msg *msglxc = reinterpret_cast<const lxc_msg *>(buffer_str_.data());
-        switch (msglxc->type)
-        {
-          case lxc_msg_state:
-            printf("'%s' changed state to [%s] [%d]\n", msglxc->name,
-                lxc_state2str((lxc_state_t) msglxc->value), msglxc->value);
-            break;
-          case lxc_msg_exit_code:
-            printf("'%s' exited with status [%d]\n", msglxc->name,
-                WEXITSTATUS((lxc_state_t) msglxc->value));
-            break;
-          default:
-            std::cout << msglxc->type << std::endl;
-            break;
-        }
-        buffer_str_.erase(0, sizeof(lxc_msg));
-      }
-
-      sd_->async_read_some(boost::asio::buffer(buffer_),
-                      boost::bind(&monitor::read_handler, this, boost::asio::placeholders::error,
-                          boost::asio::placeholders::bytes_transferred));
-    }
-    else
-    {
-      std::cerr << "read_handler error\n";
+      delete sd_;
     }
   }
 
@@ -101,6 +70,41 @@ private:
       return NULL;
     return strstate[state];
   }
+
+  void read_handler(const boost::system::error_code& ec, const std::size_t bt)
+    {
+      if(!ec)
+      {
+        buffer_str_.append(buffer_.data(), buffer_.data() + bt);
+        while (buffer_str_.size() >= sizeof(lxc_msg))
+        {
+          const lxc_msg *msglxc = reinterpret_cast<const lxc_msg *>(buffer_str_.data());
+          switch (msglxc->type)
+          {
+            case lxc_msg_state:
+              printf("'%s' changed state to [%s] [%d]\n", msglxc->name,
+                  lxc_state2str((lxc_state_t) msglxc->value), msglxc->value);
+              break;
+            case lxc_msg_exit_code:
+              printf("'%s' exited with status [%d]\n", msglxc->name,
+                  WEXITSTATUS((lxc_state_t) msglxc->value));
+              break;
+            default:
+              std::cout << msglxc->type << std::endl;
+              break;
+          }
+          buffer_str_.erase(0, sizeof(lxc_msg));
+        }
+
+        sd_->async_read_some(boost::asio::buffer(buffer_),
+                        boost::bind(&monitor::read_handler, this, boost::asio::placeholders::error,
+                            boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+        std::cerr << "read_handler error\n";
+      }
+    }
 
   boost::asio::io_context& io_context_;
   boost::asio::posix::stream_descriptor* sd_;
