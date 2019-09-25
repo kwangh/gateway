@@ -11,4 +11,6 @@ add_executable(${TARGET}
 set(CURL_LIBRARY "-lcurl")
 find_package(CURL REQUIRED)
 include_directories(${CURL_INCLUDE_DIR})
-target_link_libraries(${TARGET} ${CURL_LIBRARIES})
+target_link_libraries(${TARGET} 
+${CURL_LIBRARIES}
+pthread)
